@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { analyzeWriting } from "./features/writing/localEngines";
 import type { WritingEngineSuggestion } from "./features/writing/engine";
 import "./App.css";
+import SuggestionPanels from "./features/grammar/SuggestionPanels";
 import HighlightedEditor from "./features/grammar/HighlightedEditor";
 
 function App() {
+  const editorId = useId();
+  const editorInstructionsId = useId();
   const [title, setTitle] = useState("Untitled document");
   const [content, setContent] = useState("");
   const [dismissedStyleIds, setDismissedStyleIds] = useState<string[]>([]);
@@ -80,11 +83,17 @@ function App() {
 
           <div className="editor-divider" />
 
-          <label className="writing-label" htmlFor="writing-editor">
+          <label className="writing-label" htmlFor={editorId}>
             START WRITING
           </label>
 
+          <p id={editorInstructionsId} className="visually-hidden">
+            Write or paste your text. Review suggestions below the editor.
+          </p>
+
           <HighlightedEditor
+            id={editorId}
+            describedBy={editorInstructionsId}
             value={content}
             onChange={setContent}
             issues={highlights}
@@ -107,111 +116,13 @@ function App() {
           </footer>
         </section>
 
-        <section className="suggestions-panel" aria-live="polite">
-          <div className="suggestions-heading">
-            <div>
-              <p className="eyebrow">WRITING ASSISTANT</p>
-              <h2>Writing suggestions</h2>
-            </div>
-
-            <span className="issue-count">
-              {issues.length} {issues.length === 1 ? "issue" : "issues"}
-            </span>
-          </div>
-
-          {content.trim().length === 0 ? (
-            <p className="suggestions-empty">
-              Start writing to check for common spelling and grammar issues.
-            </p>
-          ) : issues.length === 0 ? (
-            <p className="suggestions-empty">
-              No grammar or spelling issues found by Oxford's current checks.
-            </p>
-          ) : (
-            <div className="suggestions-list">
-              {issues.map((issue) => (
-                <article className="suggestion-item" key={issue.id}>
-                  <div className="suggestion-main">
-                    <span className={`issue-type ${issue.type}`}>
-                      {issue.type === "grammar" ? "Grammar" : "Spelling"}
-                    </span>
-
-                    <p className="suggestion-message">{issue.message}</p>
-
-                    <div className="suggestion-correction">
-                      <span className="original-text">{issue.original}</span>
-                      <span aria-hidden="true">→</span>
-                      <strong>{issue.suggestion}</strong>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="apply-suggestion"
-                    onClick={() => applySuggestion(issue)}
-                  >
-                    Apply
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {content.trim().length > 0 && (
-          <section className="suggestions-panel style-suggestions-panel" aria-live="polite">
-            <div className="suggestions-heading">
-              <div>
-                <p className="eyebrow">OPTIONAL</p>
-                <h2>Writing improvements</h2>
-              </div>
-
-              <span className="issue-count">
-                {visibleStyleSuggestions.length}{" "}
-                {visibleStyleSuggestions.length === 1 ? "suggestion" : "suggestions"}
-              </span>
-            </div>
-
-            {visibleStyleSuggestions.length === 0 ? (
-              <p className="suggestions-empty">
-                No optional style suggestions right now.
-              </p>
-            ) : (
-              <div className="suggestions-list">
-                {visibleStyleSuggestions.map((suggestion) => (
-                  <article className="suggestion-item style-suggestion-item" key={suggestion.id}>
-                    <div className="suggestion-main">
-                      <span className="issue-type style">Optional style</span>
-                      <p className="suggestion-message">{suggestion.message}</p>
-                      <div className="suggestion-correction">
-                        <span className="original-text">{suggestion.original}</span>
-                        <span aria-hidden="true">→</span>
-                        <strong>{suggestion.suggestion}</strong>
-                      </div>
-                    </div>
-
-                    <div className="style-suggestion-actions">
-                      <button
-                        type="button"
-                        className="apply-suggestion"
-                        onClick={() => applySuggestion(suggestion)}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        className="dismiss-suggestion"
-                        onClick={() => setDismissedStyleIds((ids) => [...ids, suggestion.id])}
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+        <SuggestionPanels
+          hasContent={content.trim().length > 0}
+          issues={issues}
+          visibleStyleSuggestions={visibleStyleSuggestions}
+          onApply={applySuggestion}
+          onDismiss={(id) => setDismissedStyleIds((ids) => [...ids, id])}
+        />
 
         <section className="next-feature">
           <div className="feature-icon" aria-hidden="true">

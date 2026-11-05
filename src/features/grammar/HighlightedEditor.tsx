@@ -7,6 +7,8 @@ import type { WritingStyleSuggestion } from '../style/styleChecker'
 type EditorHighlight = WritingIssue | WritingStyleSuggestion
 
 type HighlightedEditorProps = {
+  id: string
+  describedBy: string
   value: string
   issues: EditorHighlight[]
   onChange: (value: string) => void
@@ -14,6 +16,8 @@ type HighlightedEditorProps = {
 }
 
 export default function HighlightedEditor({
+  id,
+  describedBy,
   value,
   issues,
   onChange,
@@ -107,6 +111,8 @@ export default function HighlightedEditor({
       </div>
 
       <textarea
+        id={id}
+        aria-describedby={describedBy}
         ref={textareaRef}
         className="writing-editor highlighted-textarea"
         value={value}
